@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FleetForge — Dashboards</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700;6..12,800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sidebar-bg:#2c2e3f;
+    --sidebar-item:#cfd2dc;
+    --sidebar-active-bg:#3c3f54;
+    --sidebar-active-text:#ffffff;
+    --pink:#e6298f;
+    --pink-soft:#f06fb4;
+    --bg:#ebedf1;
+    --card-bg:#ffffff;
+    --border:#e2e5ea;
+    --border-soft:#eef0f3;
+    --text:#2b2d3a;
+    --muted:#9aa0ac;
+    --thead-bg:#eef0f6;
+    --thead-text:#3a3d4d;
+    --rippling-tint:#eef1fb;
+    --indigo:#5d5fa3;
+    --indigo-dark:#4d4f8d;
+    --dark-btn:#34374a;
+    --dark-btn-hover:#3f4256;
+    --shadow:0 1px 3px rgba(20,22,40,.06), 0 1px 2px rgba(20,22,40,.04);
+    --shadow-hover:0 6px 18px rgba(20,22,40,.10);
+    --radius:12px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:'Nunito Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    -webkit-font-smoothing:antialiased;
+    overflow:hidden;
+  }
+  .app{display:flex;height:100vh}
+
+  /* ---------- Sidebar ---------- */
+  .sidebar{
+    width:212px;flex-shrink:0;
+    background:var(--sidebar-bg);
+    display:flex;flex-direction:column;
+    padding:0 0 14px;
+    overflow-y:auto;
+  }
+  .logo{
+    display:flex;align-items:center;gap:9px;
+    padding:22px 20px 26px;
+    user-select:none;
+  }
+  .logo .mark{
+    width:30px;height:30px;border-radius:8px;
+    background:linear-gradient(135deg,var(--pink),var(--pink-soft));
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-weight:800;font-size:18px;line-height:1;
+    box-shadow:0 2px 8px rgba(230,41,143,.4);
+  }
+  .logo .wordmark{font-size:21px;font-weight:800;letter-spacing:.3px}
+  .logo .wordmark .done{color:var(--pink)}
+  .logo .wordmark .board{color:#dfe1ea;font-weight:700}
+
+  .nav{display:flex;flex-direction:column;gap:2px;padding:0 12px}
+  .nav-item{
+    display:flex;align-items:center;gap:13px;
+    padding:11px 12px;border-radius:8px;
+    color:var(--sidebar-item);
+    font-size:15px;font-weight:600;
+    cursor:pointer;text-decoration:none;
+    transition:background .15s ease,color .15s ease;
+    position:relative;
+  }
+  .nav-item svg{width:19px;height:19px;flex-shrink:0;opacity:.92}
+  .nav-item .chev{margin-left:auto;width:15px;height:15px;opacity:.6;transition:transform .2s ease}
+  .nav-item:hover{background:rgba(255,255,255,.06);color:#fff}
+  .nav-item.active{background:var(--sidebar-active-bg);color:var(--sidebar-active-text)}
+  .nav-item.open .chev{transform:rotate(90deg)}
+  .submenu{display:none;flex-direction:column;gap:1px;padding:2px 0 4px 30px}
+  .submenu.show{display:flex}
+  .submenu a{
+    color:#aeb2c0;font-size:13.5px;font-weight:600;
+    padding:8px 12px;border-radius:6px;text-decoration:none;
+    transition:background .15s,color .15s;
+  }
+  .submenu a:hover{background:rgba(255,255,255,.05);color:#fff}
+
+  /* ---------- Main ---------- */
+  .main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+  .topbar{
+    background:var(--card-bg);
+    margin:14px 16px 0;
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:16px 22px;
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  .topbar-title{display:flex;align-items:center;gap:13px}
+  .topbar-title .ic{color:var(--text);display:flex}
+  .topbar-title .ic svg{width:26px;height:26px}
+  .topbar-title h1{font-size:25px;font-weight:800;letter-spacing:.2px}
+  .topbar-actions{display:flex;align-items:center;gap:11px}
+  .icon-btn{
+    width:40px;height:40px;border-radius:50%;border:none;
+    background:var(--dark-btn);color:#fff;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    transition:background .15s ease, transform .15s ease;
+  }
+  .icon-btn:hover{background:var(--dark-btn-hover);transform:translateY(-1px)}
+  .icon-btn svg{width:19px;height:19px}
+
+  .toolbar{display:flex;align-items:center;gap:12px;padding:18px 16px 6px}
+  .btn{
+    border:none;cursor:pointer;font-family:inherit;font-weight:700;
+    display:inline-flex;align-items:center;gap:9px;
+    border-radius:9px;font-size:14.5px;
+    transition:background .15s ease, transform .12s ease, box-shadow .15s;
+  }
+  .btn-dark{background:var(--dark-btn);color:#fff;padding:11px 18px}
+  .btn-dark:hover{background:var(--dark-btn-hover)}
+  .btn-dark .chev{width:14px;height:14px;opacity:.8}
+  .btn-date{background:var(--indigo);color:#fff;padding:0;overflow:hidden}
+  .btn-date .cal{background:var(--indigo-dark);padding:11px 12px;display:flex;align-items:center}
+  .btn-date .cal svg{width:17px;height:17px}
+  .btn-date .range{padding:11px 16px;font-weight:700;letter-spacing:.3px}
+  .btn-date:hover{background:#666aae}
+  .btn-refresh{
+    width:42px;height:42px;border-radius:50%;
+    background:#f3f4f7;color:#54586a;
+    display:flex;align-items:center;justify-content:center;padding:0;
+    box-shadow:var(--shadow);
+  }
+  .btn-refresh:hover{background:#e9eaef}
+  .btn-refresh svg{width:19px;height:19px}
+  .btn-refresh.spin svg{animation:spin .6s ease}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* dropdown menu */
+  .dd-wrap{position:relative}
+  .dd-menu{
+    position:absolute;top:calc(100% + 6px);left:0;z-index:30;
+    background:#fff;border:1px solid var(--border);border-radius:10px;
+    box-shadow:0 8px 28px rgba(20,22,40,.16);
+    min-width:230px;padding:6px;display:none;
+  }
+  .dd-menu.show{display:block}
+  .dd-menu button{
+    width:100%;text-align:left;border:none;background:none;cursor:pointer;
+    padding:9px 12px;border-radius:7px;font-family:inherit;font-size:14px;
+    font-weight:600;color:var(--text);
+  }
+  .dd-menu button:hover{background:var(--thead-bg)}
+
+  /* ---------- Cards grid ---------- */
+  .scroll{flex:1;overflow-y:auto;padding:12px 16px 28px}
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(290px,1fr));
+    gap:16px;
+    align-items:start;
+  }
+  .card{
+    background:var(--card-bg);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    min-height:210px;
+    display:flex;flex-direction:column;
+    overflow:hidden;
+    transition:box-shadow .18s ease, transform .18s ease;
+  }
+  .card:hover{box-shadow:var(--shadow-hover);transform:translateY(-2px)}
+  .card.highlight{background:var(--rippling-tint);border-color:#dbe0f4}
+  .card-title{
+    text-align:center;font-weight:800;font-size:16.5px;
+    padding:16px 14px 12px;color:var(--text);
+  }
+  .ctable{padding:0 14px 14px}
+  .ctable .thead{
+    display:grid;background:var(--thead-bg);
+    border-radius:7px;overflow:hidden;
+    font-size:13px;font-weight:700;color:var(--thead-text);
+  }
+  .ctable .thead span{padding:9px 12px}
+  .ctable .row{
+    display:flex;align-items:center;gap:9px;
+    padding:11px 12px;border-bottom:1px solid var(--border-soft);
+    color:var(--muted);font-size:13.5px;font-weight:600;
+  }
+  .ctable .row .noic{width:15px;height:15px;flex-shrink:0;opacity:.7}
+  .cols-3{grid-template-columns:1.1fr 1.1fr 1fr}
+  .cols-2{grid-template-columns:1.6fr 1fr}
+  .ctable .drow{display:grid;align-items:center;padding:11px 12px;border-bottom:1px solid var(--border-soft);color:var(--text);font-size:13.5px;font-weight:600}
+  .ctable .drow span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:8px}
+  .ctable .row.loading{color:var(--muted)}
+  /* scan lookup panel */
+  .lookup{display:none;background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:14px}
+  .lookup.show{display:block}
+  .lookup .llabel{display:block;font-size:13px;font-weight:700;color:#6b6f7b;margin-bottom:7px}
+  .lookup .lrow{display:flex;gap:8px}
+  .lookup input{flex:1;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:inherit;font-size:14px;color:var(--text);outline:none}
+  .lookup input:focus{border-color:#2f6fed}
+  .lookup .lbtn{border:none;background:#2f6fed;color:#fff;border-radius:8px;padding:10px 16px;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer}
+  .lookup .result{margin-top:12px;font-size:14px}
+  .lookup .hit{background:var(--thead-bg);border-radius:8px;padding:11px 13px;line-height:1.55;color:var(--text)}
+  .lookup .miss{color:var(--muted);font-weight:600}
+  .badge{display:inline-block;font-size:12px;font-weight:700;padding:2px 9px;border-radius:20px;background:#e6f1fb;color:#185fa5;margin-left:6px}
+
+  /* scrollbar */
+  .scroll::-webkit-scrollbar,.sidebar::-webkit-scrollbar{width:9px}
+  .scroll::-webkit-scrollbar-thumb{background:#c9cdd6;border-radius:8px}
+  .sidebar::-webkit-scrollbar-thumb{background:#43465c;border-radius:8px}
+
+  /* ---------- Scan modal ---------- */
+  .overlay{
+    position:fixed;inset:0;z-index:100;
+    background:rgba(18,20,32,.55);
+    display:none;align-items:flex-start;justify-content:center;
+    padding:38px 16px;overflow-y:auto;
+  }
+  .overlay.show{display:flex}
+  .modal{
+    background:#f1f2f4;width:100%;max-width:432px;
+    border-radius:16px;
+    box-shadow:0 24px 70px rgba(0,0,0,.45);
+    padding:22px 22px 26px;
+    animation:pop .2s ease;
+  }
+  @keyframes pop{from{transform:translateY(10px) scale(.985);opacity:0}to{transform:none;opacity:1}}
+  .modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+  .modal-head h2{font-size:23px;font-weight:800;color:var(--text)}
+  .modal-close{
+    width:35px;height:35px;border-radius:50%;border:none;cursor:pointer;
+    background:#fff;display:flex;align-items:center;justify-content:center;
+    box-shadow:0 1px 5px rgba(0,0,0,.16);transition:background .15s;
+  }
+  .modal-close:hover{background:#ececed}
+  .modal-close svg{width:16px;height:16px;color:#2b2d3a}
+
+  .scan-opt{
+    display:flex;align-items:center;gap:18px;width:100%;
+    background:#fff;border:1px solid var(--border);border-radius:12px;
+    padding:15px 20px;margin-bottom:13px;cursor:pointer;text-align:left;
+    font-family:inherit;
+    transition:box-shadow .15s ease, transform .12s ease, border-color .15s;
+  }
+  .scan-opt:hover{box-shadow:0 8px 20px rgba(20,22,40,.13);transform:translateY(-1px);border-color:#cfd3da}
+  .scan-opt .oic{width:36px;display:flex;align-items:center;justify-content:center;color:#2b2d3a;flex-shrink:0}
+  .scan-opt .oic svg{width:31px;height:31px}
+  .scan-opt .otxt b{display:block;font-size:17px;font-weight:800;color:var(--text);margin-bottom:2px}
+  .scan-opt .otxt span{font-size:14px;color:#6b6f7b;font-weight:600}
+
+  .seg-wrap{text-align:center;margin:18px 0 16px}
+  .seg{display:inline-flex;align-items:center;background:#fff;border:1px solid var(--border);border-radius:24px;padding:4px}
+  .seg button{
+    display:inline-flex;align-items:center;gap:7px;border:none;background:none;cursor:pointer;
+    font-family:inherit;font-weight:700;font-size:14px;color:#4a4d5a;
+    padding:8px 16px;border-radius:20px;transition:background .15s,color .15s;
+  }
+  .seg button svg{width:16px;height:16px}
+  .seg button.active{background:#2f6fed;color:#fff}
+  .seg button:not(.active):hover{color:#1e2030}
+
+  .fwd-wrap{text-align:center}
+  .fwd{
+    display:inline-flex;align-items:center;gap:9px;
+    background:#fff;border:1px solid var(--border);border-radius:22px;
+    padding:11px 22px;font-family:inherit;font-weight:700;font-size:15px;color:var(--text);
+    cursor:pointer;transition:background .15s,box-shadow .15s;
+  }
+  .fwd:hover{background:#f7f7f9;box-shadow:0 4px 12px rgba(20,22,40,.1)}
+  .fwd svg{width:18px;height:18px}
+
+  @media(max-width:720px){
+    .sidebar{position:fixed;left:-212px;height:100%;z-index:50;transition:left .25s}
+    .sidebar.open{left:0}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="mark">F</div>
+      <div class="wordmark"><span class="done">Fleet</span><span class="board">Forge</span></div>
+    </div>
+    <nav class="nav" id="nav">
+      <a class="nav-item" data-page="set-client">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        Set Client</a>
+
+      <a class="nav-item active" data-page="dashboards">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Dashboards</a>
+
+      <a class="nav-item" data-page="scan">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M6 12h12" stroke-width="2.4"/></svg>
+        Scan</a>
+
+      <a class="nav-item" data-page="tasks">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        Tasks</a>
+
+      <a class="nav-item" data-page="requests">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        Requests</a>
+
+      <a class="nav-item has-sub" data-sub="devices-sub">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+        Devices
+        <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></a>
+      <div class="submenu" id="devices-sub">
+        <a>All Devices</a><a>Laptops</a><a>Phones</a><a>Monitors</a>
+      </div>
+
+      <a class="nav-item" data-page="issues">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 9 16H3Z"/><line x1="12" y1="10" x2="12" y2="14"/><line x1="12" y1="17.5" x2="12" y2="17.51"/></svg>
+        Issues</a>
+
+      <a class="nav-item has-sub" data-sub="admin-sub">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+        Admin
+        <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></a>
+      <div class="submenu" id="admin-sub">
+        <a>Users</a><a>Clients</a><a>Settings</a>
+      </div>
+
+      <a class="nav-item" data-page="logout">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Log Out</a>
+    </nav>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <main class="main">
+    <header class="topbar">
+      <div class="topbar-title">
+        <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span>
+        <h1>Dashboards</h1>
+      </div>
+      <div class="topbar-actions">
+        <button class="icon-btn" title="Messages"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></button>
+        <button class="icon-btn" title="Help"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 0 1 4.5 1.5c0 1.7-2.5 2-2.5 3.5"/><line x1="12" y1="17.5" x2="12" y2="17.51"/></svg></button>
+        <button class="icon-btn" title="Account"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></button>
+      </div>
+    </header>
+
+    <div class="toolbar">
+      <div class="dd-wrap">
+        <button class="btn btn-dark" id="ddBtn">
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          Choose Dashboard
+        </button>
+        <div class="dd-menu" id="ddMenu">
+          <button>Operations Overview</button>
+          <button>Rippling Fulfillment</button>
+          <button>Repairs &amp; Returns</button>
+          <button>Device Inventory</button>
+        </div>
+      </div>
+
+      <button class="btn btn-date">
+        <span class="cal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 10h18"/></svg></span>
+        <span class="range">5/15/26 &nbsp;–&nbsp; 5/30/26</span>
+      </button>
+
+      <button class="btn btn-refresh" id="refreshBtn" title="Refresh">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+      </button>
+    </div>
+
+    <div class="scroll">
+      <div class="grid" id="grid"></div>
+    </div>
+  </main>
+</div>
+
+<!-- ============ SCAN MODAL ============ -->
+<div class="overlay" id="scanOverlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-label="Choose Scan Type">
+    <div class="modal-head">
+      <h2>Choose Scan Type</h2>
+      <button class="modal-close" id="scanClose" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+      </button>
+    </div>
+
+    <button class="scan-opt" data-scan="asset">
+      <span class="oic"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 11.6V4a1 1 0 0 0-1-1h-7.6a1 1 0 0 0-.7.3L2.3 11.7a1 1 0 0 0 0 1.4l7.6 7.6a1 1 0 0 0 1.4 0l8.4-8.4a1 1 0 0 0 .3-.7ZM7.5 9A1.5 1.5 0 1 1 9 7.5 1.5 1.5 0 0 1 7.5 9Z"/></svg></span>
+      <span class="otxt"><b>Asset Tag</b><span>Scan the device's asset tag</span></span>
+    </button>
+
+    <button class="scan-opt" data-scan="serial">
+      <span class="oic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><line x1="9" y1="3" x2="6.5" y2="21"/><line x1="17.5" y1="3" x2="15" y2="21"/><line x1="4" y1="8.5" x2="21" y2="8.5"/><line x1="3" y1="15.5" x2="20" y2="15.5"/></svg></span>
+      <span class="otxt"><b>Serial Number</b><span>Scan the device's serial number</span></span>
+    </button>
+
+    <button class="scan-opt" data-scan="shipping">
+      <span class="oic"><svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 5 3.2L12 8.4 7 5.2 12 2Zm-7 4.4 5 3.2-5 3.2-5-3.2 5-3.2Zm14 0 5 3.2-5 3.2-5-3.2 5-3.2ZM12 11.6l5 3.2-5 3.2-5-3.2 5-3.2Z"/></svg></span>
+      <span class="otxt"><b>Shipping Label</b><span>Scan a package's shipping label</span></span>
+    </button>
+
+    <button class="scan-opt" data-scan="bin">
+      <span class="oic"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 4h18a1 1 0 0 1 1 1v3H2V5a1 1 0 0 1 1-1Zm0 6h18v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-9Zm6 3a1 1 0 0 0 0 2h6a1 1 0 0 0 0-2H9Z"/></svg></span>
+      <span class="otxt"><b>Bin</b><span>Scan a bin's QR code</span></span>
+    </button>
+
+    <div class="seg-wrap">
+      <div class="seg" id="scanSeg">
+        <button class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><line x1="6" y1="10" x2="6" y2="10.01"/><line x1="10" y1="10" x2="10" y2="10.01"/><line x1="14" y1="10" x2="14" y2="10.01"/><line x1="18" y1="10" x2="18" y2="10.01"/><line x1="8" y1="14" x2="16" y2="14"/></svg>Scanner/Manual</button>
+        <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="5" x2="4" y2="19"/><line x1="8" y1="5" x2="8" y2="19"/><line x1="12" y1="5" x2="12" y2="19"/><line x1="16.5" y1="5" x2="16.5" y2="19"/><line x1="20" y1="5" x2="20" y2="19"/></svg>Barcode Camera</button>
+        <button><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h7v7H3V3Zm2 2v3h3V5H5Zm9-2h7v7h-7V3Zm2 2v3h3V5h-3ZM3 14h7v7H3v-7Zm2 2v3h3v-3H5Zm9-2h2v2h-2v-2Zm5 0h2v2h-2v-2Zm-5 3h2v2h-2v-2Zm0 3h2v1h-2v-1Zm3-3h2v2h-2v-2Zm2 2h1v3h-3v-2h2v-1Z"/></svg>QR Code</button>
+      </div>
+    </div>
+
+    <div class="lookup" id="lookup">
+      <span class="llabel" id="lookupLabel">Lookup</span>
+      <div class="lrow">
+        <input id="lookupInput" placeholder="Scan or type…" autocomplete="off">
+        <button class="lbtn" id="lookupBtn">Look up</button>
+      </div>
+      <div class="result" id="lookupResult"></div>
+    </div>
+
+    <div class="fwd-wrap">
+      <button class="fwd" id="fwdBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17c0-5 4-7 9-7"/><polyline points="13 5 20 10 13 15"/></svg>
+        Create Forwarding Label
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* ============ DATA LAYER ============
+     This is the seam between the UI and your backend. To go live, replace
+     the MOCK lookups below with real calls (shapes match fleetforge_schema.sql):
+       fetchCard(key)         ->  GET /api/dashboards/:key
+       scanLookup(type, value)->  GET /api/scan/:type?q=:value
+     Everything else in this file stays the same.
+  ========================================================= */
+  const DEVICE_COLS = ['Device','End User','Client'];
+  const BOX_COLS    = ['Box Type','Tracking','Client'];
+  const PROJECT_COLS= ['Project','Due'];
+
+  const cards = [
+    {title:'Non-Rippling Builds',       key:'nonrippling-builds',      cols:DEVICE_COLS},
+    {title:'Rippling Builds',           key:'rippling-builds',         cols:DEVICE_COLS, highlight:true},
+    {title:'Monitor Sends',             key:'monitor-sends',           cols:DEVICE_COLS},
+    {title:'Non-Rippling Return Boxes', key:'nonrippling-return-boxes',cols:BOX_COLS},
+    {title:'Rippling Return Boxes',     key:'rippling-return-boxes',   cols:BOX_COLS},
+    {title:'Non-Standard Return Boxes', key:'nonstandard-return-boxes',cols:BOX_COLS},
+    {title:'Coordinate Repairs',        key:'coordinate-repairs',      cols:DEVICE_COLS},
+    {title:'Projects Due Today',        key:'projects-due-today',      cols:PROJECT_COLS},
+  ];
+
+  // --- demo data (rows match what each dashboard SQL query returns) ---
+  const MOCK = {
+    'nonrippling-builds':      [],
+    'rippling-builds':         [['MBP 14" · FF-10293','Dana Lee','Rippling'],
+                                ['MBP 16" · FF-10294','Sam Ortiz','Rippling']],
+    'monitor-sends':           [['Dell U2723 · FF-55012','Priya Shah','Acme Co']],
+    'nonrippling-return-boxes':[],
+    'rippling-return-boxes':   [['Laptop box','1Z999AA10123456784','Rippling']],
+    'nonstandard-return-boxes':[],
+    'coordinate-repairs':      [['MBP 13" · FF-10110','Chris Vogt','Rippling']],
+    'projects-due-today':      [['Q3 onboarding wave','2026-05-30']],
+  };
+
+  // device / shipment / bin records for the scan lookup (mirror the schema tables)
+  const DEVICES = {
+    'FF-10293':{label:'MacBook Pro 14"', serial:'C02ABC123', status:'building', user:'Dana Lee',  client:'Rippling'},
+    'FF-10294':{label:'MacBook Pro 16"', serial:'C02ABC124', status:'ready',    user:'Sam Ortiz', client:'Rippling'},
+    'FF-55012':{label:'Dell U2723 monitor', serial:'CN0DELL55', status:'deployed', user:'Priya Shah', client:'Acme Co'},
+  };
+  const SERIALS  = Object.fromEntries(Object.entries(DEVICES).map(([tag,d])=>[d.serial,{...d,tag}]));
+  const SHIPMENTS= {'1Z999AA10123456784':{kind:'return_box', box:'Laptop box', status:'in_transit', client:'Rippling'}};
+  const BINS     = {'BIN-A3-B':{label:'Aisle 3 · Shelf B', devices:4}};
+
+  async function fetchCard(key){
+    // PRODUCTION: return (await fetch(`/api/dashboards/${key}`)).json();
+    await new Promise(r=>setTimeout(r,150));        // simulate network latency
+    return MOCK[key] || [];
+  }
+  async function scanLookup(type, value){
+    // PRODUCTION: return (await fetch(`/api/scan/${type}?q=${encodeURIComponent(value)}`)).json();
+    await new Promise(r=>setTimeout(r,120));
+    const v = value.trim().toUpperCase();
+    if(type==='asset')    { const d=DEVICES[v];  return d?{...d,tag:v}:null; }
+    if(type==='serial')   return SERIALS[v]   || null;
+    if(type==='shipping') return SHIPMENTS[value.trim()] || null;
+    if(type==='bin')      return BINS[v]      || null;
+    return null;
+  }
+
+  /* ============ RENDER ============ */
+  const noResultsIcon = `<svg class="noic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><line x1="5.6" y1="5.6" x2="18.4" y2="18.4"/></svg>`;
+
+  function cardShell(c){
+    const colClass = c.cols.length===2 ? 'cols-2' : 'cols-3';
+    const heads = c.cols.map(h=>`<span>${h}</span>`).join('');
+    const count = c.rows ? c.rows.length : '…';
+    let body;
+    if(!c.rows){
+      body = `<div class="row loading">Loading…</div>`;
+    }else if(c.rows.length===0){
+      body = `<div class="row">${noResultsIcon}No results</div>`;
+    }else{
+      body = c.rows.map(r=>`<div class="drow ${colClass}">${
+        r.map(cell=>`<span>${cell}</span>`).join('')
+      }</div>`).join('');
+    }
+    return `<div class="card ${c.highlight?'highlight':''}">
+      <div class="card-title">${c.title} (${count})</div>
+      <div class="ctable"><div class="thead ${colClass}">${heads}</div>${body}</div>
+    </div>`;
+  }
+
+  async function render(){
+    const grid = document.getElementById('grid');
+    cards.forEach(c=> c.rows = null);              // show loading state
+    grid.innerHTML = cards.map(cardShell).join('');
+    const results = await Promise.all(cards.map(c=>fetchCard(c.key)));
+    cards.forEach((c,i)=> c.rows = results[i]);
+    grid.innerHTML = cards.map(cardShell).join('');
+  }
+  render();
+
+  /* ---- Sidebar: active state + submenus ---- */
+  document.getElementById('nav').addEventListener('click', e=>{
+    const item = e.target.closest('.nav-item');
+    if(!item) return;
+    if(item.classList.contains('has-sub')){
+      const sub = document.getElementById(item.dataset.sub);
+      item.classList.toggle('open');
+      sub.classList.toggle('show');
+      return;
+    }
+    if(item.dataset.page==='scan'){
+      document.getElementById('scanOverlay').classList.add('show');
+      return;
+    }
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    item.classList.add('active');
+  });
+
+  /* ---- Choose Dashboard dropdown ---- */
+  const ddBtn = document.getElementById('ddBtn'), ddMenu = document.getElementById('ddMenu');
+  ddBtn.addEventListener('click', e=>{ e.stopPropagation(); ddMenu.classList.toggle('show'); });
+  document.addEventListener('click', ()=> ddMenu.classList.remove('show'));
+  ddMenu.addEventListener('click', e=>{
+    if(e.target.tagName==='BUTTON'){
+      ddBtn.lastChild.textContent = ' '+e.target.textContent;
+    }
+  });
+
+  /* ---- Refresh button ---- */
+  const rb = document.getElementById('refreshBtn');
+  rb.addEventListener('click', ()=>{
+    rb.classList.add('spin');
+    render();
+    setTimeout(()=>rb.classList.remove('spin'), 600);
+  });
+
+  /* ---- Scan modal ---- */
+  const overlay = document.getElementById('scanOverlay');
+  const lookup       = document.getElementById('lookup');
+  const lookupLabel  = document.getElementById('lookupLabel');
+  const lookupInput  = document.getElementById('lookupInput');
+  const lookupResult = document.getElementById('lookupResult');
+
+  const closeScan = ()=>{ overlay.classList.remove('show'); lookup.classList.remove('show'); };
+  document.getElementById('scanClose').addEventListener('click', closeScan);
+  overlay.addEventListener('click', e=>{ if(e.target===overlay) closeScan(); });
+  document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeScan(); });
+
+  // segmented input-method toggle
+  const seg = document.getElementById('scanSeg');
+  seg.addEventListener('click', e=>{
+    const b = e.target.closest('button');
+    if(!b) return;
+    seg.querySelectorAll('button').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+  });
+
+  // each scan type opens a lookup against the data layer
+  let scanType = null;
+  const SCAN_PROMPTS = {
+    asset:    ['Asset Tag lookup',     'Scan or type an asset tag (try FF-10293)'],
+    serial:   ['Serial Number lookup', 'Scan or type a serial (try C02ABC123)'],
+    shipping: ['Shipping Label lookup','Scan or type a tracking # (try 1Z999AA10123456784)'],
+    bin:      ['Bin lookup',           'Scan or type a bin code (try BIN-A3-B)'],
+  };
+  document.querySelectorAll('.scan-opt').forEach(opt=>{
+    opt.addEventListener('click', ()=>{
+      scanType = opt.dataset.scan;
+      const [label, ph] = SCAN_PROMPTS[scanType];
+      lookupLabel.textContent = label;
+      lookupInput.placeholder = ph;
+      lookupInput.value = '';
+      lookupResult.innerHTML = '';
+      lookup.classList.add('show');
+      lookupInput.focus();
+    });
+  });
+
+  function renderHit(type, h){
+    if(type==='shipping') return `<div class="hit"><b>${h.box}</b><span class="badge">${h.status}</span><br>${h.kind} · ${h.client}</div>`;
+    if(type==='bin')      return `<div class="hit"><b>${h.label}</b><br>${h.devices} devices stored</div>`;
+    return `<div class="hit"><b>${h.label}</b><span class="badge">${h.status}</span><br>Tag ${h.tag} · SN ${h.serial}<br>${h.user} · ${h.client}</div>`;
+  }
+  async function doLookup(){
+    const val = lookupInput.value;
+    if(!val.trim()) return;
+    lookupResult.innerHTML = `<span class="miss">Searching…</span>`;
+    const hit = await scanLookup(scanType, val);
+    lookupResult.innerHTML = hit ? renderHit(scanType, hit)
+                                 : `<div class="miss">No match for “${val.trim()}”.</div>`;
+  }
+  document.getElementById('lookupBtn').addEventListener('click', doLookup);
+  lookupInput.addEventListener('keydown', e=>{ if(e.key==='Enter') doLookup(); });
+</script>
+</body>
+</html>
